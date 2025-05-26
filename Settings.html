@@ -22,7 +22,7 @@
   <!-- Logo -->
   <div class="flex items-center justify-center h-20 bg-white">
     <div class="w-44 h-10 rounded-lg flex items-center justify-center">
-      <img src="src/images/iproat-black-logo.png" alt="">
+      <img src="src/images/SV0KVFfZjW2ETXN.png" alt="">
     </div>
   </div>
 
@@ -162,7 +162,9 @@
               name="businessName"
               required
               placeholder="Enter your business name"
+              value="Lokesh Enterprises"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
+              disabled
             />
           </div>
 
@@ -175,7 +177,9 @@
               required
               pattern="^\+?[0-9\s\-]{7,15}$"
               placeholder="+1234567890"
+              value="+919876543210"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
+              disabled
             />
           </div>
 
@@ -188,7 +192,8 @@
               required
               placeholder="Enter your business address"
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 shadow-sm placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
-            ></textarea>
+              disabled
+            >123, Tech Park, Bangalore, India</textarea>
           </div>
         </div>
       </section>
@@ -209,12 +214,14 @@
               id="logoUpload"
               accept="image/*"
               class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition cursor-pointer"
+              disabled
             />
             <p class="text-xs text-gray-500">Max file size: 2MB. Supported formats: JPG, PNG, SVG.</p>
             <button
               type="button"
               id="removeLogoBtn"
               class="hidden w-max px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-semibold shadow-sm"
+              disabled
             >
               Remove Logo
             </button>
@@ -229,7 +236,7 @@
         <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 max-w-xs">
           <label for="vatToggle" class="flex items-center cursor-pointer select-none text-gray-700 font-medium">
             <div class="relative">
-              <input type="checkbox" id="vatToggle" class="sr-only peer" />
+              <input type="checkbox" id="vatToggle" class="sr-only peer" disabled />
               <div
                 class="w-14 h-7 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out peer-checked:bg-blue-600"
               ></div>
@@ -249,6 +256,7 @@
             step="0.01"
             disabled
             placeholder="e.g. 15"
+            value="15"
             class="border border-gray-300 rounded-lg p-3 w-full text-center placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 disabled:bg-gray-100 disabled:cursor-not-allowed shadow-sm transition"
           />
         </div>
@@ -275,12 +283,20 @@
         </div>
       </section>
 
-      <!-- Submit -->
-      <section class="text-right">
+      <!-- Submit & Edit Buttons -->
+      <section class="text-right flex justify-end space-x-4">
+        <button
+          type="button"
+          id="editBtn"
+          class="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-400 transition font-semibold shadow-lg"
+        >
+          Edit
+        </button>
         <button
           type="submit"
           id="saveBtn"
-          class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-400 transition font-semibold shadow-lg w-full sm:w-auto"
+          class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-400 transition font-semibold shadow-lg"
+          disabled
         >
           Save Settings
         </button>
@@ -302,7 +318,7 @@
       <tr class="hover:bg-gray-50">
         <td class="px-6 py-4">${user.name}</td>
         <td class="px-6 py-4">
-          <select data-user-id="${user.id}" class="border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+          <select data-user-id="${user.id}" class="border border-gray-300 rounded-lg p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 transition" disabled>
             <option value="Admin" ${user.role === "Admin" ? "selected" : ""}>Admin</option>
             <option value="Staff" ${user.role === "Staff" ? "selected" : ""}>Staff</option>
             <option value="Viewer" ${user.role === "Viewer" ? "selected" : ""}>Viewer</option>
@@ -315,6 +331,91 @@
 
   const vatToggle = document.getElementById("vatToggle");
   const vatInput = document.getElementById("vatPercentage");
+  const logoUpload = document.getElementById("logoUpload");
+  const logoPreview = document.getElementById("logoPreview");
+  const noLogoText = document.getElementById("noLogoText");
+  const removeLogoBtn = document.getElementById("removeLogoBtn");
+  const settingsForm = document.getElementById("settingsForm");
+  const successMessage = document.getElementById("successMessage");
+  const saveBtn = document.getElementById("saveBtn");
+  const editBtn = document.getElementById("editBtn");
+
+  // Store original values to revert on cancel
+  let originalFormData = {};
+
+  function saveOriginalValues() {
+    originalFormData = {
+      businessName: settingsForm.businessName.value,
+      contact: settingsForm.contact.value,
+      address: settingsForm.address.value,
+      vatEnabled: vatToggle.checked,
+      vatPercentage: vatInput.value,
+      users: Array.from(document.querySelectorAll('#userRolesTableBody select')).map(s => s.value),
+      logoSrc: logoPreview.src,
+      logoVisible: !logoPreview.classList.contains("hidden"),
+    };
+  }
+
+  function restoreOriginalValues() {
+    settingsForm.businessName.value = originalFormData.businessName;
+    settingsForm.contact.value = originalFormData.contact;
+    settingsForm.address.value = originalFormData.address;
+    vatToggle.checked = originalFormData.vatEnabled;
+    vatInput.value = originalFormData.vatPercentage;
+    if (vatToggle.checked) {
+      vatInput.disabled = false;
+    } else {
+      vatInput.disabled = true;
+    }
+    document.querySelectorAll('#userRolesTableBody select').forEach((select, i) => {
+      select.value = originalFormData.users[i];
+    });
+    if (originalFormData.logoVisible) {
+      logoPreview.src = originalFormData.logoSrc;
+      logoPreview.classList.remove("hidden");
+      noLogoText.classList.add("hidden");
+      removeLogoBtn.classList.remove("hidden");
+    } else {
+      logoPreview.src = "";
+      logoPreview.classList.add("hidden");
+      noLogoText.classList.remove("hidden");
+      removeLogoBtn.classList.add("hidden");
+      logoUpload.value = "";
+    }
+  }
+
+  // Enable or disable all editable inputs/selects/buttons except buttons themselves
+  function toggleFormFields(enable) {
+    settingsForm.businessName.disabled = !enable;
+    settingsForm.contact.disabled = !enable;
+    settingsForm.address.disabled = !enable;
+    vatToggle.disabled = !enable;
+    vatInput.disabled = !enable || !vatToggle.checked;
+    document.querySelectorAll('#userRolesTableBody select').forEach(select => {
+      select.disabled = !enable;
+    });
+    logoUpload.disabled = !enable;
+    removeLogoBtn.disabled = !enable;
+  }
+
+  // Init: start in view mode (disabled inputs)
+  toggleFormFields(false);
+  saveBtn.disabled = true;
+  saveOriginalValues();
+
+  editBtn.addEventListener("click", () => {
+    if (editBtn.textContent === "Edit") {
+      toggleFormFields(true);
+      saveBtn.disabled = false;
+      editBtn.textContent = "Cancel";
+      settingsForm.businessName.focus();
+    } else {
+      restoreOriginalValues();
+      toggleFormFields(false);
+      saveBtn.disabled = true;
+      editBtn.textContent = "Edit";
+    }
+  });
 
   vatToggle.addEventListener("change", () => {
     if (vatToggle.checked) {
@@ -326,112 +427,49 @@
     }
   });
 
-  const logoUpload = document.getElementById("logoUpload");
-  const logoPreview = document.getElementById("logoPreview");
-  const noLogoText = document.getElementById("noLogoText");
-  const removeLogoBtn = document.getElementById("removeLogoBtn");
-
-  logoUpload.addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image file.");
-      logoUpload.value = "";
-      return;
+  logoUpload.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        logoPreview.src = reader.result;
+        logoPreview.classList.remove("hidden");
+        noLogoText.classList.add("hidden");
+        removeLogoBtn.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    } else {
+      logoPreview.src = "";
+      logoPreview.classList.add("hidden");
+      noLogoText.classList.remove("hidden");
+      removeLogoBtn.classList.add("hidden");
     }
-
-    const reader = new FileReader();
-    reader.onload = e => {
-      logoPreview.src = e.target.result;
-      logoPreview.classList.remove("hidden");
-      noLogoText.classList.add("hidden");
-      removeLogoBtn.classList.remove("hidden");
-    };
-    reader.readAsDataURL(file);
   });
 
   removeLogoBtn.addEventListener("click", () => {
-    logoUpload.value = "";
     logoPreview.src = "";
     logoPreview.classList.add("hidden");
     noLogoText.classList.remove("hidden");
     removeLogoBtn.classList.add("hidden");
+    logoUpload.value = "";
   });
-
-  const settingsForm = document.getElementById("settingsForm");
-  const successMessage = document.getElementById("successMessage");
-  const saveBtn = document.getElementById("saveBtn");
 
   settingsForm.addEventListener("submit", e => {
     e.preventDefault();
-
-    if (!settingsForm.businessName.value.trim()) {
-      alert("Business Name is required.");
-      settingsForm.businessName.focus();
-      return;
-    }
-    if (!settingsForm.contact.value.trim()) {
-      alert("Contact Number is required.");
-      settingsForm.contact.focus();
-      return;
-    }
-    if (!settingsForm.address.value.trim()) {
-      alert("Address is required.");
-      settingsForm.address.focus();
-      return;
-    }
-
-    if (vatToggle.checked) {
-      const vatVal = vatInput.value.trim();
-      if (!vatVal || isNaN(vatVal) || vatVal < 0 || vatVal > 100) {
-        alert("Please enter a valid VAT percentage (0-100).");
-        vatInput.focus();
-        return;
-      }
-    }
-
+    // Save logic here (e.g., send to server)
+    saveOriginalValues();
+    toggleFormFields(false);
     saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
+    editBtn.textContent = "Edit";
 
-    const formData = {
-      businessName: settingsForm.businessName.value.trim(),
-      contact: settingsForm.contact.value.trim(),
-      address: settingsForm.address.value.trim(),
-      vatEnabled: vatToggle.checked,
-      vatPercentage: vatToggle.checked ? parseFloat(vatInput.value) : null,
-      users: []
-    };
-
-    document.querySelectorAll('#userRolesTableBody select').forEach(select => {
-      formData.users.push({
-        id: parseInt(select.dataset.userId),
-        role: select.value
-      });
-    });
-
-    if (logoUpload.files.length > 0) {
-      formData.logoFileName = logoUpload.files[0].name;
-    } else {
-      formData.logoFileName = null;
-    }
-
-    console.log("Settings to save:", formData);
-
+    // Show success message
+    successMessage.classList.remove("hidden");
     setTimeout(() => {
-      successMessage.classList.remove("hidden");
-
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Save Settings";
-
-      if (!vatToggle.checked) vatInput.disabled = true;
-
-      setTimeout(() => {
-        successMessage.classList.add("hidden");
-      }, 4000);
-    }, 1500);
+      successMessage.classList.add("hidden");
+    }, 3000);
   });
 </script>
+
 
 </div>
 
